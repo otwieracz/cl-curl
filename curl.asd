@@ -77,7 +77,8 @@
 (defmethod perform ((o load-op) (c unix-dso))
   (let ((co (make-instance 'compile-op)))
     (let ((filename (car (output-files co c))))
-      (cffi:load-foreign-library "libcurl.so")
+      (or (ignore-errors (cffi:load-foreign-library "libcurl.so"))
+          (ignore-errors (cffi:load-foreign-library "libcurl.so.4")))
       (cffi:load-foreign-library filename))))
 
 (defsystem #:curl
