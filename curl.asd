@@ -1,19 +1,16 @@
-;;; -*-  Lisp -*-
 ;;********************************************************
 ;; file:        curl.asd
 ;; description: System definition for curl.
 ;; date:        Sun Mar  6 2005 - 10:29
-;; author:      Liam M. Healy <cl@healy.washington.dc.us>, Slawomir Gonet <slawek@otwiera.cz>
 ;; modified:    Thu May 11 2017
+;; author(s):   Liam M. Healy <cl@healy.washington.dc.us>
+;;              Slawomir Gonet <slawek@otwiera.cz>
 ;;********************************************************
-;;; $Id: $
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (asdf:operate 'asdf:load-op :uffi)
-  ;; (clc:clc-require :uffi)
-  )
+  (asdf:operate 'asdf:load-op :cffi-uffi-compat))
 
-(defpackage #:curl (:use cl asdf))
+(defpackage #:curl (:use #:cl #:asdf))
 (in-package #:curl)
 
 ;;; we also have a shared library with some .o files in it
@@ -84,9 +81,9 @@
       (cffi:load-foreign-library "libcurl.so")
       (cffi:load-foreign-library filename))))
 
-(defsystem curl
+(defsystem #:curl
     :version "0.10"
-    :depends-on (uffi)
+    :depends-on (#:cffi-uffi-compat)
     :components
     ((:unix-dso "clcurl"
     :components ((:c-source-file "curl")))
