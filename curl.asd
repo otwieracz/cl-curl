@@ -81,7 +81,8 @@
 (defmethod perform ((o load-op) (c unix-dso))
   (let ((co (make-instance 'compile-op)))
     (let ((filename (car (output-files co c))))
-      (uffi:load-foreign-library filename))))
+      (cffi:load-foreign-library "libcurl.so")
+      (cffi:load-foreign-library filename))))
 
 (defsystem curl
     :version "0.10"
