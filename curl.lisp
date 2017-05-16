@@ -9,10 +9,36 @@
 
 (defpackage #:curl
   (:use #:cl #:cffi-uffi-compat)
-  (:export #:set-option #:perform #:return-string #:finish #:get-information
+  (:export #:init-curl #:terminate-curl
+           #:set-option #:perform #:return-string #:finish #:get-information
            #:initialize-for-returning-string #:with-connection-returning-string
            #:set-send-string #:set-header #:http-request))
 (in-package #:curl)
+
+;;;; ----------------------------------------------------------------------
+;;;; Initialization
+;;;; ----------------------------------------------------------------------
+
+(defvar *loaded-libs* nil)
+(defvar *clcurl-asdf*
+  (asdf:output-file
+   'asdf:compile-op
+   (asdf:find-component (asdf:find-system "curl") "clcurl")))
+
+(defun init-curl (&optional (path "/opt/instinct-engine/plugins/clcurl.so"))
+  (or *loaded-libs*
+      (handler-bind ((error #'terminate-curl))
+        (push (cffi:load-foreign-library "libcurl.so.4") *loaded-libs*)
+        (push (or (ignore-errors (cffi:load-foreign-library path))
+                  (ignore-errors (cffi:load-foreign-library *clcurl-asdf*))
+                  (ignore-errors (cffi:load-foreign-library "clcurl.so"))
+                  (error "Can't find clcurl."))
+              *loaded-libs*))))
+
+(defun terminate-curl (&rest args)
+  (declare (ignore args))
+  (mapc #'cffi:close-foreign-library *loaded-libs*)
+  (setf *loaded-libs* nil))
 
 ;;; See /usr/include/curl/*.h for interface.
 
