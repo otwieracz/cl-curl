@@ -7,11 +7,10 @@
 ;;              Slawomir Gonet <slawek@otwiera.cz>
 ;;********************************************************
 
+(in-package asdf)
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (asdf:operate 'asdf:load-op :cffi-uffi-compat))
-
-(defpackage #:curl (:use #:cl #:asdf))
-(in-package #:curl)
 
 ;;; we also have a shared library with some .o files in it
 
@@ -95,5 +94,3 @@
 (defmethod perform ((o test-op) (c (eql (find-system :curl))))
   (operate 'load-op 'curl)
   (operate 'test-op 'curl))
-
-(unuse-package :asdf)

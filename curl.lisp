@@ -6,13 +6,12 @@
 ;; modified:    Wed May 11 2017
 ;;********************************************************
 
-(in-package :curl)
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (use-package :uffi)
-  (export '(set-option perform return-string finish get-information
-            initialize-for-returning-string with-connection-returning-string
-            set-send-string set-header http-request)))
+(defpackage #:curl
+  (:use #:cl #:cffi-uffi-compat)
+  (:export #:set-option #:perform #:return-string #:finish #:get-information
+           #:initialize-for-returning-string #:with-connection-returning-string
+           #:set-send-string #:set-header #:http-request))
+(in-package #:curl)
 
 ;;; See /usr/include/curl/*.h for interface.
 
