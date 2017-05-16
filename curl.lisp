@@ -554,11 +554,14 @@
 (defconstant +curl-version+ 2)
 
 ;; higher level API
-(defun http-request (url &key (method :get) content content-type additional-headers basic-authorization)
+(defun http-request (url &key (method :get) content content-type additional-headers basic-authorization (connection-timeout 15))
   (curl:with-connection-returning-string (:cookies nil)
     (handler-case
         (progn
           (curl:set-option :url url)
+          (curl:set-option :timeout connection-timeout)
+          (curl:set-option :connecttimeout connection-timeout)
+          (curl:set-option :followlocation 1)
           (when basic-authorization
             (curl:set-option :username (car basic-authorization))
             (curl:set-option :password (cadr basic-authorization)))
