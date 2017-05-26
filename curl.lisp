@@ -598,6 +598,9 @@
             (:post
              (curl:set-option :post 1)
              (curl:set-option :postfields content))
+            (:delete
+             (curl:set-option :customrequest "DELETE")
+             (curl:set-option :postfields content))
             (:get
              (curl:set-option :httpget 1)))
           (dolist (header additional-headers)
