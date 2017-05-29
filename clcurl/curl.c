@@ -164,4 +164,5 @@ void curl_finish(struct CurlTransaction *curltran)
   curl_easy_cleanup(curltran->handle);
   curl_slist_free_all(curltran->headers);
   free(curltran);
+  curl_global_cleanup();
 }

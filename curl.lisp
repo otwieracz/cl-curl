@@ -336,6 +336,7 @@
     (TCP-NODELAY . ,(+ +long-opt+ 121))
     (USERNAME . ,(+ +objectpoint-opt+ 173))
     (PASSWORD . ,(+ +objectpoint-opt+ 174))
+    (TCP-FASTOPEN . ,(+ +long-opt+ 244))
     ))
 
 (defun option-lookup (symbol)
@@ -589,6 +590,7 @@
           (curl:set-option :timeout connection-timeout)
           (curl:set-option :connecttimeout connection-timeout)
           (curl:set-option :followlocation 1)
+          (curl:set-option :tcp-fastopen 1)
           (when basic-authorization
             (curl:set-option :username (car basic-authorization))
             (curl:set-option :password (cadr basic-authorization)))
@@ -605,8 +607,7 @@
              (curl:set-option :httpget 1)))
           (dolist (header additional-headers)
             (curl:set-header header))
-          (curl:perform)
-          (curl:finish))
+          (curl:perform))
       (error (c)
         (curl:finish)
         (error c)))))
