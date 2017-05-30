@@ -590,7 +590,7 @@
           (curl:set-option :timeout connection-timeout)
           (curl:set-option :connecttimeout connection-timeout)
           (curl:set-option :followlocation 1)
-          (curl:set-option :tcp-fastopen 1)
+          #+nil(curl:set-option :tcp-fastopen 1)
           (when basic-authorization
             (curl:set-option :username (car basic-authorization))
             (curl:set-option :password (cadr basic-authorization)))
