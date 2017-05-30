@@ -19,26 +19,29 @@
 ;;;; Initialization
 ;;;; ----------------------------------------------------------------------
 
-(defvar *loaded-libs* nil)
+(defvar *clcurl-/opt*
+  "/opt/instinct-engine/plugins/clcurl.so")
+
 (defvar *clcurl-asdf*
   (asdf:output-file
    'asdf:compile-op
    (asdf:find-component (asdf:find-system "curl") "clcurl")))
 
-(defun init-curl (&optional (path "/opt/instinct-engine/plugins/clcurl.so"))
-  (or *loaded-libs*
-      (handler-bind ((error #'terminate-curl))
-        (push (cffi:load-foreign-library "libcurl.so.4") *loaded-libs*)
-        (push (or (ignore-errors (cffi:load-foreign-library path))
-                  (ignore-errors (cffi:load-foreign-library *clcurl-asdf*))
-                  (ignore-errors (cffi:load-foreign-library "clcurl.so"))
-                  (error "Can't find clcurl."))
-              *loaded-libs*))))
+(cffi:define-foreign-library libcurl
+  (t (:or "libcurl.so.3" "libcurl.so")))
+
+(cffi:define-foreign-library (clcurl :search-path (list *clcurl-/opt* *clcurl-asdf*))
+  (t "clcurl.so"))
+
+
+(defun init-curl ()
+  (handler-bind ((error #'terminate-curl))
+    (list (cffi:load-foreign-library 'libcurl)
+          (cffi:load-foreign-library 'clcurl))))
 
 (defun terminate-curl (&rest args)
   (declare (ignore args))
-  (mapc #'cffi:close-foreign-library *loaded-libs*)
-  (setf *loaded-libs* nil))
+  (mapc #'cffi:close-foreign-library '(clcurl libcurl)))
 
 ;;; See /usr/include/curl/*.h for interface.
 
