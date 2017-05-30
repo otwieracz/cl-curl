@@ -336,8 +336,8 @@
     (TCP-NODELAY . ,(+ +long-opt+ 121))
     (USERNAME . ,(+ +objectpoint-opt+ 173))
     (PASSWORD . ,(+ +objectpoint-opt+ 174))
-    (TCP-FASTOPEN . ,(+ +long-opt+ 244))
-    ))
+    ;; fastopen implemented in libcurl>=7.49
+    #+libcurl-tcp-fastopen (TCP-FASTOPEN . ,(+ +long-opt+ 244))))
 
 (defun option-lookup (symbol)
   "Find the numeric code for the CURL option."
@@ -590,7 +590,8 @@
           (curl:set-option :timeout connection-timeout)
           (curl:set-option :connecttimeout connection-timeout)
           (curl:set-option :followlocation 1)
-          #+nil(curl:set-option :tcp-fastopen 1)
+          ;; fastopen implemented in libcurl>=7.49
+          #+libcurl-tcp-fastopen(curl:set-option :tcp-fastopen 1)
           (when basic-authorization
             (curl:set-option :username (car basic-authorization))
             (curl:set-option :password (cadr basic-authorization)))
