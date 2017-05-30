@@ -28,7 +28,7 @@
    (asdf:find-component (asdf:find-system "curl") "clcurl")))
 
 (cffi:define-foreign-library libcurl
-  (t (:or "libcurl.so.3" "libcurl.so")))
+  (t (:or "libcurl.so.4" "libcurl.so")))
 
 (cffi:define-foreign-library (clcurl :search-path (list *clcurl-/opt* *clcurl-asdf*))
   (t "clcurl.so"))
