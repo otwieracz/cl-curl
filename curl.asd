@@ -75,6 +75,9 @@
 
 ;;; Load the .so library
 (defmethod perform ((o load-op) (c unix-dso))
+  t
+  ;; library should be loaded with `curl:init-curl'
+  #+ (or)
   (let ((co (make-instance 'compile-op)))
     (let ((filename (car (output-files co c))))
       (cffi:load-foreign-library "libcurl.so.4")

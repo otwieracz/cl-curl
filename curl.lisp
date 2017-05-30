@@ -33,7 +33,6 @@
 (cffi:define-foreign-library (clcurl :search-path (list *clcurl-/opt* *clcurl-asdf*))
   (t "clcurl.so"))
 
-
 (defun init-curl ()
   (handler-bind ((error #'terminate-curl))
     (list (cffi:load-foreign-library 'libcurl)
