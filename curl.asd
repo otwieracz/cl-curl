@@ -85,7 +85,7 @@
 
 (defsystem #:curl
     :version "0.10"
-    :depends-on (#:cffi-uffi-compat)
+    :depends-on (#:cffi-uffi-compat #:bordeaux-threads)
     :components
     ((:unix-dso "clcurl"
     :components ((:c-source-file "curl")))

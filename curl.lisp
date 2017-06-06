@@ -13,7 +13,7 @@
            #:set-option #:perform #:return-string #:finish #:get-information
            #:initialize-for-returning-string #:with-connection-returning-string
            #:set-send-string #:set-header #:http-request
-           #:*connection*))
+           #:*connections* #:*connection-pool-size*))
 (in-package #:curl)
 
 ;;;; ----------------------------------------------------------------------
@@ -37,8 +37,7 @@
 (defun init-curl ()
   (handler-bind ((error #'terminate-curl))
     (list (cffi:load-foreign-library 'libcurl)
-          (cffi:load-foreign-library 'clcurl))
-    (setf *connection* (init-connection))))
+          (cffi:load-foreign-library 'clcurl))))
 
 (defun terminate-curl (&rest args)
   (declare (ignore args))
