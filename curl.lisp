@@ -12,7 +12,8 @@
   (:export #:init-curl #:terminate-curl
            #:set-option #:perform #:return-string #:finish #:get-information
            #:initialize-for-returning-string #:with-connection-returning-string
-           #:set-send-string #:set-header #:http-request))
+           #:set-send-string #:set-header #:http-request
+           #:*connection*))
 (in-package #:curl)
 
 ;;;; ----------------------------------------------------------------------
@@ -35,8 +36,10 @@
 
 (defun init-curl ()
   (handler-bind ((error #'terminate-curl))
-    (list (cffi:load-foreign-library 'libcurl)
-          (cffi:load-foreign-library 'clcurl))))
+    (progn
+      (list (cffi:load-foreign-library 'libcurl)
+            (cffi:load-foreign-library 'clcurl))
+      (setf *connection* (init-connection)))))
 
 (defun terminate-curl (&rest args)
   (declare (ignore args))
@@ -72,6 +75,15 @@
 
 ;;; Close the Curl session
 (def-function ("curl_finish" finish)
+    ((connection (* :char)))
+  :returning :void)
+
+;;; For reuse
+(def-function ("curl_init" curl-init)
+    ()
+  :returning (* :char))
+
+(def-function ("curl_prepare" curl-prepare)
     ((connection (* :char)))
   :returning :void)
 
@@ -584,7 +596,7 @@
 (defconstant +curl-version+ 2)
 
 ;; higher level API
-(defun http-request (url &key (method :get) content content-type additional-headers basic-authorization (connection-timeout 15))
+(defun http-request* (url &key (method :get) content content-type additional-headers basic-authorization (connection-timeout 15))
   (curl:with-connection-returning-string (:cookies nil)
     (handler-case
         (progn

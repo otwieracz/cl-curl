@@ -89,7 +89,9 @@
     :components
     ((:unix-dso "clcurl"
     :components ((:c-source-file "curl")))
-     (:file "curl" :depends-on ("clcurl"))))
+     (:file "curl" :depends-on ("clcurl"))
+     (:file "pool" :depends-on ("clcurl"))
+     ))
 
 (defmethod perform :after ((o load-op) (c (eql (find-system :curl))))
   (provide 'curl))

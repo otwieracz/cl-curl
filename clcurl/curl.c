@@ -9,14 +9,15 @@
 /* $Id: $ */
 
 /* If you are not using ASDF, it is necessary to make a library:
- gcc -fPIC -shared curl.c -lcurl -Wl,-soname,libclcurl.so -o libclcurl.so 
+ gcc -fPIC -shared curl.c -lcurl -Wl,-soname,libclcurl.so -o libclcurl.so
 or on Darwin (?):
- gcc -dynamiclib curl.c -lcurl -Wl,-soname,libclcurl.so -o libclcurl.so 
+ gcc -dynamiclib curl.c -lcurl -Wl,-soname,libclcurl.so -o libclcurl.so
 */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <curl/curl.h>
+#include <string.h>
 
 struct MemoryStruct {
   char *memory;
@@ -35,7 +36,7 @@ WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
 {
   register int realsize = size * nmemb;
   struct MemoryStruct *mem = (struct MemoryStruct *)data;
-  
+
   mem->memory = (char *)(long)realloc(mem->memory, mem->size + realsize + 1);
   if (mem->memory) {
     memcpy(&(mem->memory[mem->size]), ptr, realsize);
@@ -45,18 +46,12 @@ WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
   return realsize;
 }
 
-struct CurlTransaction *curl_init_write_string()
+struct CurlTransaction *curl_init()
 {
   struct CurlTransaction *curltran;
 
   curltran = (struct CurlTransaction *)(long)malloc(sizeof(struct CurlTransaction));
   if (curltran != NULL) {
-
-    curltran->chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
-    curltran->chunk.size = 0;    /* no data at this point */
-
-    curltran->headers=NULL;
-    
     curltran->handle = curl_easy_init();
     if (curltran->handle) {
       /* send all data to this function  */
@@ -68,7 +63,27 @@ struct CurlTransaction *curl_init_write_string()
     return (struct CurlTransaction *)NULL;
   }
   return (struct CurlTransaction *)NULL;
-}  
+}
+
+void curl_prepare(struct CurlTransaction *curltran)
+{
+    if (curltran != NULL) {
+        curltran->chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
+        curltran->chunk.size = 0;    /* no data at this point */
+        curltran->headers=NULL;
+    }
+}
+
+struct CurlTransaction *curl_init_write_string()
+{
+    struct CurlTransaction *curltran;
+
+    curltran = (struct CurlTransaction *)(long)malloc(sizeof(struct CurlTransaction));
+    curl_init(curltran);
+    curl_prepare(curltran);
+
+    return (struct CurlTransaction *)curltran;
+}
 
 size_t
 ReadMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
@@ -84,7 +99,7 @@ int curl_set_read_string(struct CurlTransaction *curltran, char *string)
   curl_easy_setopt(curltran->handle, CURLOPT_READFUNCTION, ReadMemoryCallback);
   curl_easy_setopt(curltran->handle, CURLOPT_READDATA, string);
   return 0;
-}  
+}
 
 int curl_set_option_string(struct CurlTransaction *curltran, int option, char *val)
 {
@@ -104,7 +119,7 @@ int curl_set_option_long(struct CurlTransaction *curltran, int option, long val)
   }
 }
 
-int curl_get_information_string(struct CurlTransaction *curltran, int option, char *val) 
+int curl_get_information_string(struct CurlTransaction *curltran, int option, char *val)
 {
   if (curltran->handle) {
     return curl_easy_getinfo(curltran->handle, option, val);
@@ -113,7 +128,7 @@ int curl_get_information_string(struct CurlTransaction *curltran, int option, ch
   }
 }
 
-int curl_get_information_long(struct CurlTransaction *curltran, int option, long *val) 
+int curl_get_information_long(struct CurlTransaction *curltran, int option, long *val)
 {
   if (curltran->handle) {
     return curl_easy_getinfo(curltran->handle, option, val);
@@ -122,7 +137,7 @@ int curl_get_information_long(struct CurlTransaction *curltran, int option, long
   }
 }
 
-int curl_get_information_double(struct CurlTransaction *curltran, int option, double *val) 
+int curl_get_information_double(struct CurlTransaction *curltran, int option, double *val)
 {
   if (curltran->handle) {
     return curl_easy_getinfo(curltran->handle, option, val);
