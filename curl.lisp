@@ -37,7 +37,8 @@
 (defun init-curl ()
   (handler-bind ((error #'terminate-curl))
     (list (cffi:load-foreign-library 'libcurl)
-          (cffi:load-foreign-library 'clcurl))))
+          (cffi:load-foreign-library 'clcurl))
+    (init-connections)))
 
 (defun terminate-curl (&rest args)
   (declare (ignore args))

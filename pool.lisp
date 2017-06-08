@@ -21,15 +21,17 @@
 
   (defvar-locked *connections* nil))
 
-(defvar *connection-pool-size* 32)
+(defvar *connection-pool-size* 24)
+
+(defun init-connection ()
+  (push (curl-init) *connections*))
 
 (defun init-connections (&key (pool-size *connection-pool-size*))
   (with-locked-var *connections*
     (dotimes (i (- pool-size (length *connections*)))
-      (push (curl-init) *connections*))))
+      (init-connection))))
 
 (defun get-connection ()
-  (init-connections)
   (loop
     with connection = nil
     while (when (null connection)
@@ -48,30 +50,39 @@
   "Establish a network connection, and return the final string."
   `(values-list
     (let ((connection (get-connection)))
-      (flet ((set-option (option value) (set-option connection option value))
-             (perform () (perform connection))
-             (curl-prepare () (curl-prepare connection))
-             (finish () (finish connection))
-             (set-header (string) (set-header connection string))
-             (return-string () (return-string connection))
-             (set-send-string (string) (set-send-string connection string)))
-        #-allegro
-        (declare (ignorable (function set-option)
-                            (function perform)
-                            (function return-string)
-                            (function set-send-string)))
-        ,(when cookies
-           (if (stringp cookies)
-               `(set-option :cookiefile ,cookies)
-               '(set-option :cookiefile "nonsense.cookies")))
-        (curl-prepare)
-        ,@body
-        (perform)
-        (prog1
-            (list
-             (copy-seq (return-string))
-             (status connection))
-          (return-connection connection))))))
+      (handler-case
+          (flet ((set-option (option value) (set-option connection option value))
+                 (perform () (perform connection))
+                 (curl-prepare () (curl-prepare connection))
+                 (finish () (finish connection))
+                 (set-header (string) (set-header connection string))
+                 (return-string () (return-string connection))
+                 (set-send-string (string) (set-send-string connection string)))
+            #-allegro
+            (declare (ignorable (function set-option)
+                                (function perform)
+                                (function return-string)
+                                (function set-send-string)))
+            ,(when cookies
+               (if (stringp cookies)
+                   `(set-option :cookiefile ,cookies)
+                   '(set-option :cookiefile "nonsense.cookies")))
+            (curl-prepare)
+            ,@body
+            (perform)
+            (prog1
+                (list
+                 (copy-seq (return-string))
+                 (status connection))
+              ;; Return connection to pool
+              (return-connection connection)))
+        (error (c)
+          ;; In case of error, cleanup
+          (finish connection)
+          ;; Start new connection to replace dead one
+          (init-connection)
+          ;; Throw error
+          (error c))))))
 
 (defun finish-connection (&key (connection *connection*))
   (finish connection))
