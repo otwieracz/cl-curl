@@ -26,9 +26,9 @@
 (defun init-connection ()
   (push (curl-init) *connections*))
 
-(defun init-connections (&key (pool-size *connection-pool-size*))
+(defun init-connections (&key pool-size)
   (with-locked-var *connections*
-    (dotimes (i (- pool-size (length *connections*)))
+    (dotimes (i (- (or pool-size *connection-pool-size*) (length *connections*)))
       (init-connection))))
 
 (defun get-connection ()
