@@ -58,7 +58,7 @@
       (handler-case
           (flet ((set-option (option value) (set-option connection option value))
                  (perform () (perform connection))
-                 (reset () (easy-reset connection))
+                 (prepare () (curl-prepare connection))
                  (finish () (finish connection))
                  (set-header (string) (set-header connection string))
                  (return-string () (return-string connection))
@@ -69,7 +69,7 @@
                                 (function finish)
                                 (function return-string)
                                 (function set-send-string)))
-            (reset)
+            (prepare)
             ,(when cookies
                (if (stringp cookies)
                    `(set-option :cookiefile ,cookies)

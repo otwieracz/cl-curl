@@ -82,7 +82,7 @@
     ()
   :returning (* :char))
 
-(def-function ("curl_easy_reset" easy-reset)
+(def-function ("curl_prepare" curl-prepare)
     ((connection (* :char)))
   :returning :void)
 
@@ -111,7 +111,7 @@
     `(values-list
       (let ((,sym (initialize-for-returning-string)))
         (flet ((set-option (option value) (set-option ,sym option value))
-               (reset () (easy-reset ,sym))
+               (prepare () (curl-prepare ,sym))
                (perform () (perform ,sym))
                (finish () (finish ,sym))
                (set-header (string) (set-header ,sym string))
@@ -123,7 +123,7 @@
                               (function return-string)
                               (function set-send-string)))
           ;; clear all old options
-          (reset)
+          ;; (reset)
           ,(when reassure
              `(format *terminal-io* "Connecting to ~a ~a..."
                       ,(third (find :url body :key #'second :test #'string-equal))

@@ -71,6 +71,11 @@ void curl_prepare(struct CurlTransaction *curltran)
         curltran->chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
         curltran->chunk.size = 0;    /* no data at this point */
         curltran->headers=NULL;
+        curl_easy_reset(curltran->handle);
+        /* send all data to this function  */
+        curl_easy_setopt(curltran->handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+        /* we pass our 'chunk' struct to the callback function */
+        curl_easy_setopt(curltran->handle, CURLOPT_WRITEDATA, (void *)&curltran->chunk);
     }
 }
 
