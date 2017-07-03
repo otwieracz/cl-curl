@@ -58,6 +58,7 @@
       (handler-case
           (flet ((set-option (option value) (set-option connection option value))
                  (perform () (perform connection))
+                 (reset () (easy-reset connection))
                  (curl-prepare () (curl-prepare connection))
                  (finish () (finish connection))
                  (set-header (string) (set-header connection string))
@@ -74,6 +75,7 @@
                    `(set-option :cookiefile ,cookies)
                    '(set-option :cookiefile "nonsense.cookies")))
             (curl-prepare)
+            (reset)
             ,@body
             (perform)
             (prog2

@@ -613,6 +613,10 @@
           (curl:set-option :connecttimeout connection-timeout)
           (curl:set-option :followlocation 1)
           (curl:set-option :nosignal 1)
+          (curl:set-option :verbose 1)
+          (curl:set-option :tcp-nodelay 1)
+          (curl:set-option :tcp-keepalive 1)
+          (curl:set-option :buffersize 131072) ;; 128kB buffersize
           ;; fastopen implemented in libcurl>=7.49
           #+libcurl-tcp-fastopen(curl:set-option :tcp-fastopen 1)
           (when basic-authorization
