@@ -86,6 +86,10 @@
     ((connection (* :char)))
   :returning :void)
 
+(def-function ("curl_easy_reset" easy-reset)
+    ((connection (* :char)))
+  :returning :void)
+
 ;;;; ----------------------------------------------------------------------
 ;;;; Higher level functions
 ;;;; ----------------------------------------------------------------------
@@ -111,6 +115,7 @@
     `(values-list
       (let ((,sym (initialize-for-returning-string)))
         (flet ((set-option (option value) (set-option ,sym option value))
+               (reset () (easy-reset ,sym))
                (perform () (perform ,sym))
                (finish () (finish ,sym))
                (set-header (string) (set-header ,sym string))
@@ -121,6 +126,8 @@
                               (function perform)
                               (function return-string)
                               (function set-send-string)))
+          ;; clear all old options
+          (reset)
           ,(when reassure
              `(format *terminal-io* "Connecting to ~a ~a..."
                       ,(third (find :url body :key #'second :test #'string-equal))
@@ -350,7 +357,9 @@
     (USERNAME . ,(+ +objectpoint-opt+ 173))
     (PASSWORD . ,(+ +objectpoint-opt+ 174))
     ;; fastopen implemented in libcurl>=7.49
-    #+libcurl-tcp-fastopen (TCP-FASTOPEN . ,(+ +long-opt+ 244))))
+    #+libcurl-tcp-fastopen (TCP-FASTOPEN . ,(+ +long-opt+ 244))
+    (TCP-KEEPALIVE . ,(+ +long-opt+ 121))
+    ))
 
 (defun option-lookup (symbol)
   "Find the numeric code for the CURL option."

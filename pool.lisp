@@ -4,6 +4,8 @@
 
 ;; Locked variables
 
+(defvar *curl-slowdown* 0.005)
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun locked-value-lock-name (name)
     "Used for locked-values"
@@ -46,6 +48,9 @@
   (with-locked-var *connections*
     (push connection *connections*)))
 
+(defun slowdown ()
+  (sleep *curl-slowdown*))
+
 (defmacro perform-in-connection ((&key (cookies nil)) &body body)
   "Establish a network connection, and return the final string."
   `(values-list
@@ -61,6 +66,7 @@
             #-allegro
             (declare (ignorable (function set-option)
                                 (function perform)
+                                (function finish)
                                 (function return-string)
                                 (function set-send-string)))
             ,(when cookies
@@ -70,7 +76,8 @@
             (curl-prepare)
             ,@body
             (perform)
-            (prog1
+            (prog2
+                (slowdown)
                 (list
                  (copy-seq (return-string))
                  (status connection))
@@ -94,6 +101,11 @@
       (curl:set-option :timeout connection-timeout)
       (curl:set-option :connecttimeout connection-timeout)
       (curl:set-option :followlocation 1)
+      (curl:set-option :nosignal 1)
+      (curl:set-option :verbose 1)
+      (curl:set-option :tcp-nodelay 1)
+      (curl:set-option :tcp-keepalive 1)
+      (curl:set-option :buffersize 131072) ;; 128kB buffersize
       ;; fastopen implemented in libcurl>=7.49
       #+libcurl-tcp-fastopen(curl:set-option :tcp-fastopen 1)
       (when basic-authorization
