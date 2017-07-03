@@ -48,18 +48,17 @@
   (with-locked-var *connections*
     (push connection *connections*)))
 
+  "Establish a network connection, and return the final string."
 (defun slowdown ()
   (sleep *curl-slowdown*))
 
 (defmacro perform-in-connection ((&key (cookies nil)) &body body)
-  "Establish a network connection, and return the final string."
   `(values-list
     (let ((connection (get-connection)))
       (handler-case
           (flet ((set-option (option value) (set-option connection option value))
                  (perform () (perform connection))
                  (reset () (easy-reset connection))
-                 (curl-prepare () (curl-prepare connection))
                  (finish () (finish connection))
                  (set-header (string) (set-header connection string))
                  (return-string () (return-string connection))
@@ -70,12 +69,11 @@
                                 (function finish)
                                 (function return-string)
                                 (function set-send-string)))
+            (reset)
             ,(when cookies
                (if (stringp cookies)
                    `(set-option :cookiefile ,cookies)
                    '(set-option :cookiefile "nonsense.cookies")))
-            (curl-prepare)
-            (reset)
             ,@body
             (perform)
             (prog2
@@ -104,7 +102,7 @@
       (curl:set-option :connecttimeout connection-timeout)
       (curl:set-option :followlocation 1)
       (curl:set-option :nosignal 1)
-      (curl:set-option :verbose 1)
+;;      (curl:set-option :verbose 1)
       (curl:set-option :tcp-nodelay 1)
       (curl:set-option :tcp-keepalive 1)
       (curl:set-option :buffersize 131072) ;; 128kB buffersize

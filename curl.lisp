@@ -82,10 +82,6 @@
     ()
   :returning (* :char))
 
-(def-function ("curl_prepare" curl-prepare)
-    ((connection (* :char)))
-  :returning :void)
-
 (def-function ("curl_easy_reset" easy-reset)
     ((connection (* :char)))
   :returning :void)
@@ -605,7 +601,7 @@
 
 ;; higher level API
 (defun http-request* (url &key (method :get) content content-type additional-headers basic-authorization (connection-timeout 15))
-  (curl:with-connection-returning-string (:cookies nil)
+  (with-connection-returning-string (:cookies nil)
     (handler-case
         (progn
           (curl:set-option :url url)
@@ -613,7 +609,7 @@
           (curl:set-option :connecttimeout connection-timeout)
           (curl:set-option :followlocation 1)
           (curl:set-option :nosignal 1)
-          (curl:set-option :verbose 1)
+;;          (curl:set-option :verbose 1)
           (curl:set-option :tcp-nodelay 1)
           (curl:set-option :tcp-keepalive 1)
           (curl:set-option :buffersize 131072) ;; 128kB buffersize
