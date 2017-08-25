@@ -4,7 +4,7 @@
 
 ;; Locked variables
 
-(defvar *curl-slowdown* 0.005)
+(defvar *curl-slowdown* 0.001)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun locked-value-lock-name (name)
@@ -23,7 +23,7 @@
 
   (defvar-locked *connections* nil))
 
-(defvar *connection-pool-size* 24)
+(defvar *connection-pool-size* 48)
 
 (defun init-connection ()
   (push (curl-init) *connections*))

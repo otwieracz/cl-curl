@@ -34,10 +34,12 @@
 (cffi:define-foreign-library (clcurl :search-path (list *clcurl-/opt* *clcurl-asdf*))
   (t "clcurl.so"))
 
-(defun init-curl (&optional connections)
+(defun init-curl (&optional connections slowdown)
   (handler-bind ((error #'terminate-curl))
     (list (cffi:load-foreign-library 'libcurl)
           (cffi:load-foreign-library 'clcurl))
+    (when (and slowdown (numberp slowdown))
+      (setf *curl-slowdown* slowdown))
     (init-connections :pool-size connections)))
 
 (defun terminate-curl (&rest args)
