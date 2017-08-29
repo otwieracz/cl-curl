@@ -40,12 +40,12 @@
 
 (defun init-curl (&optional connections slowdown)
   (handler-bind ((error #'terminate-curl))
-    (list (cffi:load-foreign-library 'libcurl)
-          (or (ignore-errors (cffi:load-foreign-library 'clcurl))
-              (cffi:load-foreign-library 'clcurl-rh69)))
-    (when (and slowdown (numberp slowdown))
-      (setf *curl-slowdown* slowdown))
-    (init-connections :pool-size connections)))
+    (prog1 (list (cffi:load-foreign-library 'libcurl)
+                 (or (ignore-errors (cffi:load-foreign-library 'clcurl))
+                     (cffi:load-foreign-library 'clcurl-rh69)))
+      (when (and slowdown (numberp slowdown))
+        (setf *curl-slowdown* slowdown))
+      (init-connections :pool-size connections))))
 
 (defun terminate-curl (&rest args)
   (declare (ignore args))
