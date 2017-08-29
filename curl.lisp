@@ -20,6 +20,9 @@
 ;;;; Initialization
 ;;;; ----------------------------------------------------------------------
 
+(defvar *clcurl-rh69*
+  "/opt/instinct-engine/plugins/clcurl-rh69.so")
+
 (defvar *clcurl-/opt*
   "/opt/instinct-engine/plugins/clcurl.so")
 
@@ -31,8 +34,8 @@
 (cffi:define-foreign-library libcurl
   (t (:or "libcurl.so.4" "libcurl.so")))
 
-(cffi:define-foreign-library (clcurl :search-path (list *clcurl-/opt* *clcurl-asdf*))
-  (t "clcurl.so"))
+(cffi:define-foreign-library (clcurl :search-path (list *clcurl-rh69* *clcurl-/opt* *clcurl-asdf*))
+  (t (:or "clcurl-rh69.so" "clcurl.so")))
 
 (defun init-curl (&optional connections)
   (handler-bind ((error #'terminate-curl))
