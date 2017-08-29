@@ -20,21 +20,19 @@
 ;;;; Initialization
 ;;;; ----------------------------------------------------------------------
 
-(defvar *clcurl-rh69*
-  "/opt/instinct-engine/plugins/clcurl-rh69.so")
-
 (defvar *clcurl-/opt*
-  "/opt/instinct-engine/plugins/clcurl.so")
+  "/opt/instinct-engine/plugins/")
 
 (defvar *clcurl-asdf*
-  (asdf:output-file
-   'asdf:compile-op
-   (asdf:find-component (asdf:find-system "curl") "clcurl")))
+  (ignore-errors
+    (asdf:output-file
+     'asdf:compile-op
+     (asdf:find-component (asdf:find-system "curl") "clcurl"))))
 
 (cffi:define-foreign-library libcurl
   (t (:or "libcurl.so.4" "libcurl.so")))
 
-(cffi:define-foreign-library (clcurl :search-path (list *clcurl-rh69* *clcurl-/opt* *clcurl-asdf*))
+(cffi:define-foreign-library (clcurl :search-path (list *clcurl-/opt* *clcurl-asdf*))
   (t (:or "clcurl-rh69.so" "clcurl.so")))
 
 (defun init-curl (&optional connections slowdown)
