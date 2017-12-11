@@ -83,8 +83,7 @@ struct CurlTransaction *curl_init_write_string()
 {
     struct CurlTransaction *curltran;
 
-    curltran = (struct CurlTransaction *)(long)malloc(sizeof(struct CurlTransaction));
-    curl_init(curltran);
+    curltran = curl_init();
     curl_prepare(curltran);
 
     return (struct CurlTransaction *)curltran;
