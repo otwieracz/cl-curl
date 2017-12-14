@@ -176,6 +176,7 @@ char *curl_return_string(struct CurlTransaction *curltran)
 void curl_free_string(struct CurlTransaction *curltran)
 {
   free(curltran->chunk.memory);
+  curltran->chunk.memory = NULL;
 }
 
 void curl_finish(struct CurlTransaction *curltran)

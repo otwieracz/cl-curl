@@ -76,23 +76,19 @@
                    '(set-option :cookiefile "nonsense.cookies")))
             ,@body
             (perform)
-            (prog2
-                (slowdown)
-                (list
-                 (copy-seq (return-string))
-                 (status connection))
+            (slowdown)
+            (prog1 (list (return-string) (status connection))
               ;; Return connection to pool
+              (delete-string connection)
               (return-connection connection)))
         (error (c)
           ;; In case of error, cleanup
+          (delete-string connection)
           (finish connection)
           ;; Start new connection to replace dead one
           (init-connection)
           ;; Throw error
           (error c))))))
-
-(defun finish-connection (&key (connection *connection*))
-  (finish connection))
 
 (defun http-request (url &key (method :get) content content-type additional-headers basic-authorization (connection-timeout 15))
   (perform-in-connection (:cookies nil)
@@ -116,10 +112,10 @@
       (ecase method
         (:post
          (curl:set-option :post 1)
-         (curl:set-option :postfields content))
+         (curl:set-option :copy-postfields content))
         (:delete
          (curl:set-option :customrequest "DELETE")
-         (curl:set-option :postfields content))
+         (curl:set-option :copy-postfields content))
         (:get
          (curl:set-option :httpget 1)))
       (dolist (header additional-headers)

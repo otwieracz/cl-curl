@@ -142,15 +142,12 @@
                  `(set-option :cookiefile ,cookies)
                  '(set-option :cookiefile "nonsense.cookies")))
           ,@body
-          (prog1
-              (list
-               (copy-seq (return-string))
-               (status ,sym))
+          (unwind-protect (prog1 (list (return-string) (status ,sym))
+                            (when ,reassure
+                              (format *terminal-io* " done")
+                              (force-output *terminal-io*)))
             (delete-string ,sym)
-            (finish)
-            (when ,reassure
-              (format *terminal-io* " done")
-              (force-output *terminal-io*))))))))
+            (finish)))))))
 
 ;;;; ----------------------------------------------------------------------
 ;;;; Return status
@@ -386,6 +383,7 @@
     (FTP-SSL . ,(+ +long-opt+ 119))
     (POSTFIELDSIZE-LARGE . ,(+ +offt-opt+ 120))
     (TCP-NODELAY . ,(+ +long-opt+ 121))
+    (COPY-POSTFIELDS . ,(+ +objectpoint-opt+ 165))
     (USERNAME . ,(+ +objectpoint-opt+ 173))
     (PASSWORD . ,(+ +objectpoint-opt+ 174))
     ;; fastopen implemented in libcurl>=7.49
@@ -407,11 +405,15 @@
      (value :long))
   :returning :int)
 
-(def-function ("curl_set_option_string" set-option-string)
+(def-function ("curl_set_option_string" set-option-string*)
     ((connection (* :char))
      (option :int)
      (value :cstring))
   :returning :int)
+
+(defun set-option-string (connection option value)
+  (prog1 (set-option-string* connection option value)
+    (uffi:free-cstring value)))
 
 (defun set-option (connection option value)
   "Set the CURL option."
@@ -451,7 +453,9 @@
     ((connection (* :char))
      (header :cstring))
   :returning :void)
+
 (defun set-header (connection header)
+  ;; this cstring is freed in curl_finish from `clcurl/curl.c'
   (set-header* connection (convert-to-cstring header)))
 
 ;;;; ----------------------------------------------------------------------
@@ -537,7 +541,8 @@
   "Set a string to be sent."
   ;; What if it's not a post?
   (set-option connection :postfieldsize (length string))
-  (set-read-string-int connection (convert-to-cstring string)))
+  (uffi:with-cstring (cstring string)
+   (set-read-string-int connection cstring)))
 
 ;;;; ----------------------------------------------------------------------
 ;;;; Subcode enumerations
@@ -659,10 +664,10 @@
           (ecase method
             (:post
              (curl:set-option :post 1)
-             (curl:set-option :postfields content))
+             (curl:set-option :copy-postfields content))
             (:delete
              (curl:set-option :customrequest "DELETE")
-             (curl:set-option :postfields content))
+             (curl:set-option :copy-postfields content))
             (:get
              (curl:set-option :httpget 1)))
           (dolist (header additional-headers)
