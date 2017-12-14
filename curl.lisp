@@ -13,7 +13,8 @@
            #:set-option #:perform #:return-string #:finish #:get-information
            #:initialize-for-returning-string #:with-connection-returning-string
            #:set-send-string #:set-header #:http-request
-           #:*connections* #:*connection-pool-size*))
+           #:*connections* #:*connection-pool-size*
+           #:curl-error #:error-code #:error-code-to-int #:int-to-error-code #:error-code-case))
 (in-package #:curl)
 
 ;;;; ----------------------------------------------------------------------
@@ -155,81 +156,109 @@
 ;;;; Return status
 ;;;; ----------------------------------------------------------------------
 
-(defparameter *error-codes*
-  '(ok
-    unsupported-protocol		; 1
-    failed-init				; 2
-    url-malformat			; 3
-    url-malformat-user			; 4
-    couldnt-resolve-proxy		; 5
-    couldnt-resolve-host		; 6
-    couldnt-connect			; 7
-    ftp-weird-server-reply		; 8
-    ftp-access-denied			; 9
-    ftp-user-password-incorrect		; 10
-    ftp-weird-pass-reply		; 11
-    ftp-weird-user-reply		; 12
-    ftp-weird-pasv-reply		; 13
-    ftp-weird-227-format		; 14
-    ftp-cant-get-host			; 15
-    ftp-cant-reconnect			; 16
-    ftp-couldnt-set-binary		; 17
-    partial-file			; 18
-    ftp-couldnt-retr-file		; 19
-    ftp-write-error			; 20
-    ftp-quote-error			; 21
-    http-returned-error			; 22
-    write-error				; 23
-    malformat-user			; 24 - user name is illegally specified
-    ftp-couldnt-stor-file		; 25 - failed FTP upload
-    read-error				; 26 - could open/read from file
-    out-of-memory			; 27
-    operation-timeouted			; 28 - the timeout time was reached
-    ftp-couldnt-set-ascii		; 29 - TYPE A failed
-    ftp-port-failed			; 30 - FTP PORT operation failed
-    ftp-couldnt-use-rest		; 31 - the REST command failed
-    ftp-couldnt-get-size		; 32 - the SIZE command failed
-    http-range-error			; 33 - RANGE "command" didn't work
-    http-post-error			; 34
-    ssl-connect-error			; 35 - wrong when connecting with SSL
-    bad-download-resume			; 36 - couldn't resume download
-    file-couldnt-read-file		; 37
-    ldap-cannot-bind			; 38
-    ldap-search-failed			; 39
-    library-not-found			; 40
-    function-not-found			; 41
-    aborted-by-callback			; 42
-    bad-function-argument		; 43
-    bad-calling-order			; 44
-    http-port-failed			; 45 - HTTP interface operation failed
-    bad-password-entered		; 46 - my-getpass() returns fail
-    too-many-redirects			; 47 - catch endless re-direct loops
-    unknown-telnet-option		; 48 - user specified an unknown option
-    telnet-option-syntax		; 49 - Malformed telnet option
-    obsolete				; 50 - removed after 7.7.3
-    ssl-peer-certificate		; 51 - peer's certificate wasn't ok
-    got-nothing				; 52 - when this is a specific error
-    ssl-engine-notfound			; 53 - SSL crypto engine not found
-    ssl-engine-setfailed		; 54 - can not set SSL crypto engine as default
-    send-error				; 55 - failed sending network data
-    recv-error				; 56 - failure in receiving network data
-    share-in-use			; 57 - share is in use
-    ssl-certproblem			; 58 - problem with the local certificate
-    ssl-cipher				; 59 - couldn't use specified cipher
-    ssl-cacert				; 60 - problem with the CA cert (path?)
-    bad-content-encoding		; 61 - Unrecognized transfer encoding
-    ldap-invalid-url			; 62 - Invalid LDAP URL
-    filesize-exceeded			; 63 - Maximum file size exceeded
-    ftp-ssl-failed			; 64 - Requested FTP SSL level failed
-    last)
-  "Error codes returned from CURL functions." )
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter *error-codes*
+    '(ok
+      unsupported-protocol              ; 1
+      failed-init                       ; 2
+      url-malformat                     ; 3
+      url-malformat-user                ; 4
+      couldnt-resolve-proxy             ; 5
+      couldnt-resolve-host              ; 6
+      couldnt-connect                   ; 7
+      ftp-weird-server-reply            ; 8
+      ftp-access-denied                 ; 9
+      ftp-user-password-incorrect       ; 10
+      ftp-weird-pass-reply              ; 11
+      ftp-weird-user-reply              ; 12
+      ftp-weird-pasv-reply              ; 13
+      ftp-weird-227-format              ; 14
+      ftp-cant-get-host                 ; 15
+      ftp-cant-reconnect                ; 16
+      ftp-couldnt-set-binary            ; 17
+      partial-file                      ; 18
+      ftp-couldnt-retr-file             ; 19
+      ftp-write-error                   ; 20
+      ftp-quote-error                   ; 21
+      http-returned-error               ; 22
+      write-error                       ; 23
+      malformat-user                    ; 24 - user name is illegally specified
+      ftp-couldnt-stor-file             ; 25 - failed FTP upload
+      read-error                        ; 26 - could open/read from file
+      out-of-memory                     ; 27
+      operation-timeouted               ; 28 - the timeout time was reached
+      ftp-couldnt-set-ascii             ; 29 - TYPE A failed
+      ftp-port-failed                   ; 30 - FTP PORT operation failed
+      ftp-couldnt-use-rest              ; 31 - the REST command failed
+      ftp-couldnt-get-size              ; 32 - the SIZE command failed
+      http-range-error                  ; 33 - RANGE "command" didn't work
+      http-post-error                   ; 34
+      ssl-connect-error                 ; 35 - wrong when connecting with SSL
+      bad-download-resume               ; 36 - couldn't resume download
+      file-couldnt-read-file            ; 37
+      ldap-cannot-bind                  ; 38
+      ldap-search-failed                ; 39
+      library-not-found                 ; 40
+      function-not-found                ; 41
+      aborted-by-callback               ; 42
+      bad-function-argument             ; 43
+      bad-calling-order                 ; 44
+      http-port-failed                  ; 45 - HTTP interface operation failed
+      bad-password-entered              ; 46 - my-getpass() returns fail
+      too-many-redirects                ; 47 - catch endless re-direct loops
+      unknown-telnet-option             ; 48 - user specified an unknown option
+      telnet-option-syntax              ; 49 - Malformed telnet option
+      obsolete                          ; 50 - removed after 7.7.3
+      ssl-peer-certificate              ; 51 - peer's certificate wasn't ok
+      got-nothing                       ; 52 - when this is a specific error
+      ssl-engine-notfound               ; 53 - SSL crypto engine not found
+      ssl-engine-setfailed              ; 54 - can not set SSL crypto engine as default
+      send-error                        ; 55 - failed sending network data
+      recv-error                        ; 56 - failure in receiving network data
+      share-in-use                      ; 57 - share is in use
+      ssl-certproblem                   ; 58 - problem with the local certificate
+      ssl-cipher                        ; 59 - couldn't use specified cipher
+      ssl-cacert                        ; 60 - problem with the CA cert (path?)
+      bad-content-encoding              ; 61 - Unrecognized transfer encoding
+      ldap-invalid-url                  ; 62 - Invalid LDAP URL
+      filesize-exceeded                 ; 63 - Maximum file size exceeded
+      ftp-ssl-failed                    ; 64 - Requested FTP SSL level failed
+      last)
+    "Error codes returned from CURL functions." )
+
+  (defun int-to-error-code (int)
+    (nth int *error-codes*))
+
+  (defun error-code-to-int (error-code)
+    (position error-code *error-codes*))
+  )
+
+(defmacro error-code-case (keyform &body cases)
+  "Macro allowing error-code symbol usage in case clauses"
+  `(case ,keyform
+     ,@(loop
+          for (test rest) in cases
+          collect
+            (list (cond
+                    ((eq test t) test)
+                    ((typep test 'symbol) (error-code-to-int test))
+                    ((typep test 'list) (mapcar #'error-code-to-int test)))
+                  rest))))
+
+(define-condition curl-error (serious-condition)
+  ((error-code :initarg :error-code :reader error-code)
+   (error-textual :initarg :error-textual :reader error-textual))
+  (:report (lambda (condition stream)
+             (format stream "CURL error ~d (~a)" (error-code condition) (error-textual condition)))))
 
 (defun return-error-check (result)
   (if (zerop result)
       t					; sucess
-      (if (plusp result)
-          (error "CURL error ~d (~a)" result (nth result *error-codes*))
-          (error "No CURL handle."))))
+      (error 'curl-error
+             :error-code result
+             :error-textual (if (plusp result)
+                                (nth result *error-codes*)
+                                "No CURL handle."))))
 
 ;;;; ----------------------------------------------------------------------
 ;;;; Set curl options
