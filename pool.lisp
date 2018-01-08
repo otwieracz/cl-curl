@@ -81,7 +81,7 @@
               ;; Return connection to pool
               (delete-string connection)
               (return-connection connection)))
-        (error (c)
+        (serious-condition (c)
           ;; In case of error, cleanup
           (delete-string connection)
           (finish connection)
