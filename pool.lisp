@@ -122,4 +122,3 @@
          (curl:set-option :httpget 1)))
       (dolist (header additional-headers)
         (curl:set-header header)))))
-verifypeer
