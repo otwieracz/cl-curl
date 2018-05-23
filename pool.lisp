@@ -90,7 +90,7 @@
           ;; Throw error
           (error c))))))
 
-(defun http-request (url &key (method :get) content content-type additional-headers basic-authorization (connection-timeout 15))
+(defun http-request (url &key (method :get) content content-type additional-headers basic-authorization (connection-timeout 15) (verify t))
   (perform-in-connection (:cookies nil)
     (progn
       (curl:set-option :url url)
@@ -101,6 +101,8 @@
 ;;      (curl:set-option :verbose 1)
       (curl:set-option :tcp-nodelay 1)
       (curl:set-option :tcp-keepalive 1)
+      (curl:set-option :ssl-verifypeer (if verify 1 0))
+      (curl:set-option :ssl-verifyhost (if verify 1 0))
       (curl:set-option :buffersize 131072) ;; 128kB buffersize
       ;; fastopen implemented in libcurl>=7.49
       #+libcurl-tcp-fastopen(curl:set-option :tcp-fastopen 1)
@@ -120,3 +122,4 @@
          (curl:set-option :httpget 1)))
       (dolist (header additional-headers)
         (curl:set-header header)))))
+verifypeer
